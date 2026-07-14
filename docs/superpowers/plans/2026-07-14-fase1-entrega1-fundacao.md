@@ -17,8 +17,6 @@
 ## Estrutura de arquivos ao final da entrega
 
 ```
-docker-compose.yml              # PostgreSQL local (dev + teste)
-scripts/init-banco-teste.sql    # cria o banco nefrosys_teste no container
 prisma/schema.prisma            # Usuario, Sessao, EventoAuditoria, enum Perfil
 prisma/seed.ts                  # cria o primeiro administrador
 vitest.config.ts
@@ -53,7 +51,7 @@ tests/
   autenticar.test.ts / perfis.test.ts / usuarios-servico.test.ts
 ```
 
-**Pré-requisitos da máquina:** Node.js 20+ e Docker Desktop. Se Docker não for viável, instalar PostgreSQL 16 nativo e criar os bancos `nefrosys` e `nefrosys_teste` manualmente com usuário `nefrosys` / senha `nefrosys_dev` — o restante do plano não muda.
+**Banco de dados (decisão de execução):** O PostgreSQL é hospedado no **Railway** (nuvem), não em Docker local. A instância roda PostgreSQL 18.4. Usamos dois bancos na mesma instância: `railway` (desenvolvimento, padrão do Railway) e `nefrosys_teste` (testes, criado à parte). A connection string pública (`DATABASE_PUBLIC_URL`) fica só no `.env`/`.env.test` locais, nunca versionada. Requisito da máquina: Node.js 20+.
 
 ---
 
@@ -92,61 +90,43 @@ git commit -m "chore: scaffold Next.js + TypeScript + Tailwind"
 ### Task 2: PostgreSQL local, Prisma e Vitest
 
 **Files:**
-- Create: `docker-compose.yml`, `scripts/init-banco-teste.sql`, `.env`, `.env.test`, `.env.exemplo`, `src/lib/db.ts`, `vitest.config.ts`, `tests/setup.ts`, `tests/setup-global.ts`, `tests/infra.test.ts`
-- Modify: `package.json` (script `test`), `prisma/schema.prisma` (gerado pelo init)
+- Create: `.env`, `.env.test`, `.env.exemplo`, `src/lib/db.ts`, `vitest.config.ts`, `tests/setup.ts`, `tests/setup-global.ts`, `tests/infra.test.ts`
+- Modify: `package.json` (script `test`), `.gitignore`, `prisma/schema.prisma` (gerado pelo init)
 
-- [ ] **Step 1: Criar docker-compose.yml e script de banco de teste**
+- [ ] **Step 1: Banco no Railway (já provisionado)**
 
-```yaml
-# docker-compose.yml
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: nefrosys
-      POSTGRES_PASSWORD: nefrosys_dev
-      POSTGRES_DB: nefrosys
-    ports:
-      - "5432:5432"
-    volumes:
-      - dados_pg:/var/lib/postgresql/data
-      - ./scripts/init-banco-teste.sql:/docker-entrypoint-initdb.d/init-banco-teste.sql
-volumes:
-  dados_pg:
+O PostgreSQL é hospedado no Railway. A instância e o banco de testes `nefrosys_teste` já foram
+criados na execução. A connection string pública tem o formato:
+
+```
+postgresql://postgres:<senha>@<host>.proxy.rlwy.net:<porta>/railway
 ```
 
-```sql
--- scripts/init-banco-teste.sql
-CREATE DATABASE nefrosys_teste;
-```
+O banco de desenvolvimento é o `railway` (padrão); o de testes é o mesmo host com `/nefrosys_teste`.
 
-- [ ] **Step 2: Subir o banco**
-
-Run: `docker compose up -d && docker compose ps`
-Esperado: serviço `db` com status "running/healthy". (Primeira execução baixa a imagem.)
-
-- [ ] **Step 3: Instalar e inicializar o Prisma**
+- [ ] **Step 2: Instalar e inicializar o Prisma**
 
 ```bash
 npm install prisma @prisma/client
 npx prisma init --datasource-provider postgresql
 ```
 
-Criar os arquivos de ambiente (o `.gitignore` do create-next-app já ignora `.env*`; o `.env.exemplo` é versionado):
+Criar os arquivos de ambiente (o `.gitignore` do create-next-app já ignora `.env*`; o `.env.exemplo`
+é versionado). Substituir `<senha>`, `<host>` e `<porta>` pelos valores reais do Railway:
 
 ```bash
 # .env
-DATABASE_URL="postgresql://nefrosys:nefrosys_dev@localhost:5432/nefrosys"
+DATABASE_URL="postgresql://postgres:<senha>@<host>.proxy.rlwy.net:<porta>/railway"
 ```
 
 ```bash
 # .env.test
-DATABASE_URL="postgresql://nefrosys:nefrosys_dev@localhost:5432/nefrosys_teste"
+DATABASE_URL="postgresql://postgres:<senha>@<host>.proxy.rlwy.net:<porta>/nefrosys_teste"
 ```
 
 ```bash
-# .env.exemplo — copie para .env e ajuste
-DATABASE_URL="postgresql://nefrosys:nefrosys_dev@localhost:5432/nefrosys"
+# .env.exemplo — copie para .env e preencha com a DATABASE_PUBLIC_URL do Railway
+DATABASE_URL="postgresql://postgres:SENHA@HOST.proxy.rlwy.net:PORTA/railway"
 ```
 
 Adicionar `!.env.exemplo` ao final do `.gitignore` para versionar o exemplo.
