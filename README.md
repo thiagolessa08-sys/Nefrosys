@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nefrosys (novo)
 
-## Getting Started
+Sistema de gestão para clínica de nefrologia/diálise. Fase 1 em construção —
+veja `docs/superpowers/specs/` para o design e `docs/superpowers/plans/` para os planos.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 20+
+- Um banco PostgreSQL acessível (usamos o **Railway** na nuvem). Não é necessário Docker.
+
+## Primeira execução
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.exemplo .env          # preencha DATABASE_URL com a DATABASE_PUBLIC_URL do Railway (database "railway")
+npm install
+npx prisma migrate deploy     # aplica as migrações no banco de desenvolvimento
+npx prisma db seed            # cria admin@clinica.local (senha: TroqueEstaSenha!123)
+npm run dev                   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No primeiro acesso, entre como `admin@clinica.local` / `TroqueEstaSenha!123` e **troque a senha**
+(a troca de senha pelo próprio usuário chega na próxima entrega; por ora, redefina via um outro
+administrador ou pelo seed).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Banco de dados
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Desenvolvimento:** database `railway` (padrão do Railway), configurado em `.env` (`DATABASE_URL`).
+- **Testes:** database `nefrosys_teste` na mesma instância, configurado em `.env.test`. Os testes
+  apagam e recriam dados — **nunca** apontam para o banco de desenvolvimento.
+- Nenhum arquivo `.env*` (exceto `.env.exemplo`) é versionado. A connection string contém senha.
 
-## Learn More
+## Testes
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm test                      # aplica as migrações no banco de teste e executa o Vitest
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Os testes rodam contra o PostgreSQL remoto (Railway), então dependem de rede e levam ~2 min.
+Falhas esporádicas por conexão (`P1001`/`P1011`) costumam passar ao rodar de novo.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Convenções
 
-## Deploy on Vercel
+- Regras de negócio em `src/lib/**` como funções testáveis; páginas e server actions são camada fina.
+- Toda ação clínica ou administrativa relevante gera evento em `EventoAuditoria` (somente-acréscimo).
+- Identificadores de domínio em português.
+- Autenticação própria: senha com bcrypt (custo 12), sessões opacas em banco (só o hash SHA-256 do
+  token é armazenado), cookie httpOnly. Perfis de acesso: Administrador, Médico, Enfermagem, Técnico,
+  Recepção, Multiprofissional.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estrutura
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/lib/auth/` — senha, sessão, autenticação, cookie, server actions e contexto do usuário.
+- `src/lib/usuarios/` — serviço de gestão de usuários.
+- `src/lib/auditoria.ts`, `src/lib/perfis.ts` — trilha de auditoria e perfis.
+- `src/app/(app)/` — área autenticada (shell, início, usuários, auditoria).
+- `src/app/login/`, `src/app/sem-permissao/` — rotas públicas.
+- `prisma/` — esquema, migrações e seed.
