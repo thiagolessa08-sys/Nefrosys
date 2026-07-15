@@ -5,6 +5,8 @@ import type { Perfil } from "@prisma/client";
 export async function limparBanco() {
   await db.sessao.deleteMany();
   await db.eventoAuditoria.deleteMany();
+  await db.mudancaSituacao.deleteMany();
+  await db.paciente.deleteMany();
   await db.usuario.deleteMany();
 }
 
