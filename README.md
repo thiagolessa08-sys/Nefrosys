@@ -38,6 +38,30 @@ npm test                      # aplica as migrações no banco de teste e execut
 Os testes rodam contra o PostgreSQL remoto (Railway), então dependem de rede e levam ~2 min.
 Falhas esporádicas por conexão (`P1001`/`P1011`) costumam passar ao rodar de novo.
 
+## Deploy no Railway
+
+O deploy é feito a partir da branch `master` do GitHub. O serviço da aplicação e o PostgreSQL
+ficam no mesmo projeto Railway.
+
+**Variável obrigatória no serviço da aplicação:**
+
+| Variável | Valor |
+|----------|-------|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+
+Use essa referência ao serviço Postgres (URL **interna**), e não a `DATABASE_PUBLIC_URL` — o tráfego
+fica dentro da rede do Railway, sem passar pela internet. Ajuste `Postgres` para o nome real do
+serviço, se for diferente.
+
+**O que acontece automaticamente:**
+
+- No build: `postinstall` roda `prisma generate` (gera o client), depois `next build`.
+- Na inicialização: `npm start` roda `prisma migrate deploy` (aplica migrações pendentes) e sobe o
+  `next start`. A porta vem da variável `PORT` que o Railway define.
+
+**Primeiro deploy:** crie o administrador rodando o seed uma vez contra o banco de produção
+(`npx prisma db seed`, com `DATABASE_URL` apontando para ele) e **troque a senha em seguida**.
+
 ## Convenções
 
 - Regras de negócio em `src/lib/**` como funções testáveis; páginas e server actions são camada fina.
