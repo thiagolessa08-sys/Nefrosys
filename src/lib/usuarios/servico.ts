@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { gerarHashSenha } from "@/lib/auth/senha";
+import { gerarHashSenha, verificarSenha } from "@/lib/auth/senha";
 import { registrarEvento } from "@/lib/auditoria";
 import type { Perfil } from "@prisma/client";
 
@@ -57,6 +57,35 @@ export async function redefinirSenha(usuarioId: string, novaSenha: string, autor
   await registrarEvento({
     usuarioId: autorId,
     acao: "usuario.redefinir_senha",
+    entidade: "Usuario",
+    entidadeId: usuarioId,
+  });
+  return { ok: true, id: usuarioId };
+}
+
+export async function alterarPropriaSenha(
+  usuarioId: string,
+  senhaAtual: string,
+  novaSenha: string,
+): Promise<ResultadoUsuario> {
+  if (novaSenha.length < TAMANHO_MINIMO_SENHA)
+    return { ok: false, erro: `A senha deve ter ao menos ${TAMANHO_MINIMO_SENHA} caracteres.` };
+
+  const usuario = await db.usuario.findUnique({ where: { id: usuarioId } });
+  if (!usuario) return { ok: false, erro: "Usuário não encontrado." };
+  if (!(await verificarSenha(senhaAtual, usuario.senhaHash)))
+    return { ok: false, erro: "Senha atual incorreta." };
+  if (await verificarSenha(novaSenha, usuario.senhaHash))
+    return { ok: false, erro: "A nova senha deve ser diferente da atual." };
+
+  await db.usuario.update({
+    where: { id: usuarioId },
+    data: { senhaHash: await gerarHashSenha(novaSenha) },
+  });
+  await db.sessao.deleteMany({ where: { usuarioId } }); // força novo login em todos os dispositivos
+  await registrarEvento({
+    usuarioId,
+    acao: "usuario.alterar_propria_senha",
     entidade: "Usuario",
     entidadeId: usuarioId,
   });
