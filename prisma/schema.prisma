@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Perfil {
+  ADMINISTRADOR
+  MEDICO
+  ENFERMAGEM
+  TECNICO
+  RECEPCAO
+  MULTIPROFISSIONAL
+}
+
+model Usuario {
+  id           String   @id @default(cuid())
+  nome         String
+  email        String   @unique
+  senhaHash    String
+  perfil       Perfil
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  sessoes Sessao[]
+  eventos EventoAuditoria[]
+}
+
+model Sessao {
+  id        String   @id // hash SHA-256 do token — o token em si nunca é armazenado
+  usuarioId String
+  expiraEm  DateTime
+  criadaEm  DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+}
+
+model EventoAuditoria {
+  id         String   @id @default(cuid())
+  usuarioId  String?
+  acao       String // ex.: "login.sucesso", "usuario.criar"
+  entidade   String? // ex.: "Usuario"
+  entidadeId String?
+  detalhes   Json?
+  criadoEm   DateTime @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([criadoEm])
+  @@index([usuarioId])
+}
