@@ -23,9 +23,16 @@ const ROTULO_MODALIDADE: Record<Modalidade, string> = {
   DIALISE_PERITONEAL: "Diálise peritoneal",
 };
 
+// Datas de calendário (nascimento, início da diálise) são gravadas como meia-noite UTC.
+// Converter para o fuso de Brasília jogaria para as 21h do dia anterior — data errada.
 function formatarData(data: Date | null): string {
   if (!data) return "—";
-  return data.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
+
+// Já um instante (quando o registro foi feito) é exibido no fuso da clínica.
+function formatarDataHora(data: Date): string {
+  return data.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
 export default async function PaginaPaciente({ params }: { params: Promise<{ id: string }> }) {
@@ -137,7 +144,7 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
             <tbody>
               {paciente.mudancasSituacao.map((mudanca) => (
                 <tr key={mudanca.id} className="border-b">
-                  <td className="py-2">{formatarData(mudanca.registradoEm)}</td>
+                  <td className="py-2">{formatarDataHora(mudanca.registradoEm)}</td>
                   <td className="py-2">{mudanca.de ? ROTULO_SITUACAO[mudanca.de] : "—"}</td>
                   <td className="py-2">{ROTULO_SITUACAO[mudanca.para]}</td>
                   <td className="py-2">{mudanca.motivo ?? "—"}</td>
