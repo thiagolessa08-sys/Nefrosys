@@ -15,12 +15,13 @@ cp .env.exemplo .env          # preencha DATABASE_URL com a DATABASE_PUBLIC_URL 
 npm install
 npx prisma migrate deploy     # aplica as migrações no banco de desenvolvimento
 npx prisma db seed            # cria admin@clinica.local (senha: TroqueEstaSenha!123)
+npm run seed:demo             # (opcional) carrega 10 pacientes FICTÍCIOS para testar
 npm run dev                   # http://localhost:3000
 ```
 
-No primeiro acesso, entre como `admin@clinica.local` / `TroqueEstaSenha!123` e **troque a senha**
-(a troca de senha pelo próprio usuário chega na próxima entrega; por ora, redefina via um outro
-administrador ou pelo seed).
+No primeiro acesso, entre como `admin@clinica.local` / `TroqueEstaSenha!123` e **troque a senha
+imediatamente** em "Minha conta" (clique no seu nome no cabeçalho). A senha padrão está neste
+README e no `prisma/seed.ts` — ou seja, é pública.
 
 ## Banco de dados
 
@@ -28,6 +29,10 @@ administrador ou pelo seed).
 - **Testes:** database `nefrosys_teste` na mesma instância, configurado em `.env.test`. Os testes
   apagam e recriam dados — **nunca** apontam para o banco de desenvolvimento.
 - Nenhum arquivo `.env*` (exceto `.env.exemplo`) é versionado. A connection string contém senha.
+
+O comando `npm run seed:demo` cria 10 pacientes fictícios (CPF/CNS gerados por algoritmo de dígito
+verificador, sem correspondência com pessoas reais). É idempotente. **Nunca rode contra um banco com
+dados reais.**
 
 ## Testes
 

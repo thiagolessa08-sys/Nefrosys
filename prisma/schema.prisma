@@ -55,3 +55,82 @@ model EventoAuditoria {
   @@index([criadoEm])
   @@index([usuarioId])
 }
+
+enum Sexo {
+  FEMININO
+  MASCULINO
+  OUTRO
+}
+
+enum TipoVinculo {
+  SUS
+  CONVENIO
+}
+
+enum Modalidade {
+  HEMODIALISE
+  DIALISE_PERITONEAL
+}
+
+enum SituacaoPaciente {
+  ATIVO
+  TRANSPLANTADO
+  OBITO
+  TRANSFERIDO
+  EM_TRANSITO
+}
+
+model Paciente {
+  id             String   @id @default(cuid())
+  nome           String
+  cpf            String   @unique
+  cns            String?  @unique
+  dataNascimento DateTime
+  sexo           Sexo
+  telefone       String?
+  emailContato   String?
+
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  uf          String?
+  cep         String?
+
+  contatoEmergenciaNome     String?
+  contatoEmergenciaTelefone String?
+
+  tipoVinculo       TipoVinculo
+  convenioNome      String?
+  convenioMatricula String?
+  convenioValidade  DateTime?
+
+  cidDoencaBase     String?
+  dataInicioDialise DateTime?
+  modalidade        Modalidade?
+  situacao          SituacaoPaciente @default(ATIVO)
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  mudancasSituacao MudancaSituacao[]
+
+  @@index([nome])
+  @@index([situacao])
+  @@index([modalidade])
+}
+
+model MudancaSituacao {
+  id              String            @id @default(cuid())
+  pacienteId      String
+  de              SituacaoPaciente?
+  para            SituacaoPaciente
+  motivo          String?
+  registradoPorId String?
+  registradoEm    DateTime          @default(now())
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+}
