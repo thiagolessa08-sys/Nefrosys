@@ -99,12 +99,51 @@ const PACIENTES: Prisma.PacienteCreateInput[] = [
 
 async function main() {
   let criados = 0;
+  const idPorCpf = new Map<string, string>();
   for (const p of PACIENTES) {
     const existente = await db.paciente.findUnique({ where: { cpf: p.cpf } });
-    if (existente) continue;
-    await db.paciente.create({ data: p });
+    if (existente) {
+      idPorCpf.set(p.cpf, existente.id);
+      continue;
+    }
+    const novo = await db.paciente.create({ data: p });
+    idPorCpf.set(p.cpf, novo.id);
     criados++;
   }
+
+  // Dados clínicos só para pacientes recém-criados (idempotente: só quando criou tudo do zero).
+  if (criados > 0) {
+    const maria = idPorCpf.get("52998224725")!;
+    const joao = idPorCpf.get("16899535009")!;
+    const antonia = idPorCpf.get("23844285865")!;
+
+    await db.acessoVascular.create({
+      data: { pacienteId: maria, tipo: "FISTULA", localizacao: "MSE radiocefálica", dataConfeccao: new Date("2019-06-01") },
+    });
+    await db.acessoVascular.create({
+      data: { pacienteId: joao, tipo: "CATETER", localizacao: "Jugular direita", dataConfeccao: new Date("2021-02-10") },
+    });
+
+    await db.sorologia.createMany({
+      data: [
+        { pacienteId: maria, tipo: "HBSAG", resultado: "NEGATIVO", dataExame: new Date("2024-01-10") },
+        { pacienteId: maria, tipo: "ANTI_HCV", resultado: "NEGATIVO", dataExame: new Date("2024-01-10") },
+        { pacienteId: maria, tipo: "HIV", resultado: "NEGATIVO", dataExame: new Date("2024-01-10") },
+        { pacienteId: joao, tipo: "ANTI_HCV", resultado: "POSITIVO", dataExame: new Date("2023-08-01") },
+      ],
+    });
+
+    await db.medicacao.createMany({
+      data: [
+        { pacienteId: maria, nome: "Losartana", dose: "50mg", posologia: "1x/dia" },
+        { pacienteId: maria, nome: "Sevelamer", dose: "800mg", posologia: "3x/dia às refeições" },
+        { pacienteId: joao, nome: "Eritropoetina", dose: "4000UI", posologia: "3x/semana" },
+      ],
+    });
+
+    await db.alergia.create({ data: { pacienteId: antonia, descricao: "Penicilina" } });
+  }
+
   const total = await db.paciente.count();
   console.log(`Demo: ${criados} paciente(s) criado(s). Total no banco: ${total}.`);
 }
