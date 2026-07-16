@@ -33,4 +33,13 @@ describe("permissoes de paciente", () => {
       expect(PERFIS_CLINICO_PACIENTE).toContain(perfil);
     }
   });
+
+  it("leitura clínica exclui recepção e administrador, inclui os demais", async () => {
+    const { PERFIS_CLINICO_LEITURA } = await import("@/lib/pacientes/permissoes");
+    expect(PERFIS_CLINICO_LEITURA).not.toContain("ADMINISTRADOR");
+    expect(PERFIS_CLINICO_LEITURA).not.toContain("RECEPCAO");
+    for (const perfil of ["MEDICO", "ENFERMAGEM", "TECNICO", "MULTIPROFISSIONAL"] as const) {
+      expect(PERFIS_CLINICO_LEITURA).toContain(perfil);
+    }
+  });
 });

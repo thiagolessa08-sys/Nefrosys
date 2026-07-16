@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { exigirPerfil } from "@/lib/auth/contexto";
-import { PERFIS_LEITURA_PACIENTE, PERFIS_CLINICO_PACIENTE } from "@/lib/pacientes/permissoes";
+import { PERFIS_LEITURA_PACIENTE, PERFIS_CLINICO_PACIENTE, PERFIS_CLINICO_LEITURA } from "@/lib/pacientes/permissoes";
 import { perfilPermitido } from "@/lib/perfis";
 import { db } from "@/lib/db";
 import { formatarCpf } from "@/lib/pacientes/documentos";
@@ -56,6 +56,7 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
   });
 
   const podeEditarClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_PACIENTE);
+  const podeVerClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_LEITURA);
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -101,6 +102,8 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
         </dl>
       </section>
 
+      {podeVerClinico && (
+      <>
       <section className="rounded bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Dados nefrológicos</h2>
         {podeEditarClinico ? (
@@ -156,10 +159,14 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
           <p className="mt-3 text-sm text-slate-500">Nenhuma mudança de situação registrada.</p>
         )}
       </section>
+      </>
+      )}
 
-      <p className="text-xs text-slate-400">
-        Acessos e sorologias, medicações, alergias e evoluções chegam nas próximas entregas.
-      </p>
+      {podeVerClinico && (
+        <p className="text-xs text-slate-400">
+          Evoluções chegam na próxima entrega.
+        </p>
+      )}
     </div>
   );
 }
