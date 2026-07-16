@@ -82,6 +82,8 @@ serviço, se for diferente.
 
 - `src/lib/auth/` — senha, sessão, autenticação, cookie, server actions e contexto do usuário.
 - `src/lib/usuarios/` — serviço de gestão de usuários.
+- `src/lib/pacientes/` — cadastro, busca, dados clínicos, resumo e evoluções (`evolucoes.ts`:
+  rascunho com salvamento automático, assinatura imutável, adendos, linha do tempo).
 - `src/lib/auditoria.ts`, `src/lib/perfis.ts` — trilha de auditoria e perfis.
 - `src/app/(app)/` — área autenticada (shell, início, usuários, auditoria).
 - `src/app/login/`, `src/app/sem-permissao/` — rotas públicas.

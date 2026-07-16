@@ -83,12 +83,14 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
           <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
         </p>
         {podeVerClinico && (
-          <Link
-            href={`/pacientes/${paciente.id}/resumo`}
-            className="mt-1 inline-block text-sm text-blue-700 hover:underline"
-          >
-            Ver resumo do paciente →
-          </Link>
+          <div className="mt-1 flex gap-4 text-sm">
+            <Link href={`/pacientes/${paciente.id}/resumo`} className="text-blue-700 hover:underline">
+              Ver resumo do paciente →
+            </Link>
+            <Link href={`/pacientes/${paciente.id}/evolucoes`} className="text-blue-700 hover:underline">
+              Evoluções →
+            </Link>
+          </div>
         )}
       </div>
 
