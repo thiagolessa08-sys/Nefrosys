@@ -26,8 +26,9 @@ README e no `prisma/seed.ts` — ou seja, é pública.
 ## Banco de dados
 
 - **Desenvolvimento:** database `railway` (padrão do Railway), configurado em `.env` (`DATABASE_URL`).
-- **Testes:** database `nefrosys_teste` na mesma instância, configurado em `.env.test`. Os testes
-  apagam e recriam dados — **nunca** apontam para o banco de desenvolvimento.
+- **Testes:** PostgreSQL **local e efêmero**, iniciado automaticamente pelo `embedded-postgres`
+  (`tests/setup-global.ts`) na porta 5433 e destruído ao fim da suíte. Não depende de rede nem do
+  Railway — rápido e isolado. Não é preciso instalar Postgres: o binário vem no `node_modules`.
 - Nenhum arquivo `.env*` (exceto `.env.exemplo`) é versionado. A connection string contém senha.
 
 O comando `npm run seed:demo` cria 10 pacientes fictícios (CPF/CNS gerados por algoritmo de dígito
@@ -38,11 +39,11 @@ exercitar a tela de resumo e os filtros clínicos.
 ## Testes
 
 ```bash
-npm test                      # aplica as migrações no banco de teste e executa o Vitest
+npm test                      # sobe um Postgres local, aplica as migrações e executa o Vitest
 ```
 
-Os testes rodam contra o PostgreSQL remoto (Railway), então dependem de rede e levam ~2 min.
-Falhas esporádicas por conexão (`P1001`/`P1011`) costumam passar ao rodar de novo.
+Os testes usam um PostgreSQL local efêmero (sem rede), então são rápidos (~40s a suíte inteira) e
+confiáveis. A instância é criada e destruída automaticamente a cada execução.
 
 ## Deploy no Railway
 
