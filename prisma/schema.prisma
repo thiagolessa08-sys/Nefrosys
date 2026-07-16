@@ -115,6 +115,10 @@ model Paciente {
   atualizadoEm DateTime @updatedAt
 
   mudancasSituacao MudancaSituacao[]
+  acessos     AcessoVascular[]
+  sorologias  Sorologia[]
+  medicacoes  Medicacao[]
+  alergias    Alergia[]
 
   @@index([nome])
   @@index([situacao])
@@ -129,6 +133,83 @@ model MudancaSituacao {
   motivo          String?
   registradoPorId String?
   registradoEm    DateTime          @default(now())
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+}
+
+enum TipoAcesso {
+  FISTULA
+  CATETER
+  PROTESE
+}
+
+enum SituacaoAcesso {
+  EM_USO
+  PERDIDO
+}
+
+enum TipoSorologia {
+  HBSAG
+  ANTI_HCV
+  HIV
+}
+
+enum ResultadoSorologia {
+  POSITIVO
+  NEGATIVO
+  INDETERMINADO
+}
+
+model AcessoVascular {
+  id           String         @id @default(cuid())
+  pacienteId   String
+  tipo         TipoAcesso
+  localizacao  String
+  dataConfeccao DateTime
+  situacao     SituacaoAcesso @default(EM_USO)
+  observacao   String?
+  criadoEm     DateTime       @default(now())
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+}
+
+model Sorologia {
+  id         String             @id @default(cuid())
+  pacienteId String
+  tipo       TipoSorologia
+  resultado  ResultadoSorologia
+  dataExame  DateTime
+  criadoEm   DateTime           @default(now())
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+}
+
+model Medicacao {
+  id         String    @id @default(cuid())
+  pacienteId String
+  nome       String
+  dose       String?
+  posologia  String?
+  ativa      Boolean   @default(true)
+  suspensaEm DateTime?
+  criadoEm   DateTime  @default(now())
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId])
+}
+
+model Alergia {
+  id         String   @id @default(cuid())
+  pacienteId String
+  descricao  String
+  criadoEm   DateTime @default(now())
 
   paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
 
