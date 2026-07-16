@@ -120,6 +120,8 @@ model Paciente {
   medicacoes  Medicacao[]
   alergias    Alergia[]
   evolucoes Evolucao[]
+  documentos     Documento[] @relation("DocumentosDoPaciente")
+  fotoDocumentoId String?
 
   @@index([nome])
   @@index([situacao])
@@ -252,4 +254,29 @@ model Adendo {
   evolucao Evolucao @relation(fields: [evolucaoId], references: [id], onDelete: Cascade)
 
   @@index([evolucaoId])
+}
+
+enum CategoriaDocumento {
+  LAUDO
+  EXAME
+  TERMO
+  IDENTIDADE
+  FOTO
+  OUTRO
+}
+
+model Documento {
+  id             String             @id @default(cuid())
+  pacienteId     String
+  categoria      CategoriaDocumento
+  nomeOriginal   String
+  chaveArmazenamento String          @unique
+  tipoMime       String
+  tamanhoBytes   Int
+  autorId        String
+  criadoEm       DateTime           @default(now())
+
+  paciente Paciente @relation("DocumentosDoPaciente", fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  @@index([pacienteId, categoria])
 }
