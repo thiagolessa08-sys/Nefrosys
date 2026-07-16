@@ -50,16 +50,26 @@ export default async function PaginaResumo({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div>
-        <Link href={`/pacientes/${paciente.id}`} className="text-sm text-blue-700 hover:underline">
-          ← Ficha completa
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold text-slate-800">{paciente.nome}</h1>
-        <p className="text-sm text-slate-500">
-          {formatarCpf(paciente.cpf)} · {dataUTC(paciente.dataNascimento)} ·{" "}
-          <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
-          {paciente.modalidade ? ` · ${ROTULO_MODALIDADE[paciente.modalidade]}` : ""}
-        </p>
+      <div className="flex items-center gap-4">
+        {paciente.fotoDocumentoId && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/documentos/${paciente.fotoDocumentoId}`}
+            alt={`Foto de ${paciente.nome}`}
+            className="h-20 w-20 rounded-full object-cover"
+          />
+        )}
+        <div>
+          <Link href={`/pacientes/${paciente.id}`} className="text-sm text-blue-700 hover:underline">
+            ← Ficha completa
+          </Link>
+          <h1 className="mt-1 text-xl font-semibold text-slate-800">{paciente.nome}</h1>
+          <p className="text-sm text-slate-500">
+            {formatarCpf(paciente.cpf)} · {dataUTC(paciente.dataNascimento)} ·{" "}
+            <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
+            {paciente.modalidade ? ` · ${ROTULO_MODALIDADE[paciente.modalidade]}` : ""}
+          </p>
+        </div>
       </div>
 
       {alergias.length > 0 && (
