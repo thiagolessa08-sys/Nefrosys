@@ -92,6 +92,12 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
             </Link>
           </div>
         )}
+        <Link
+          href={`/pacientes/${paciente.id}/documentos`}
+          className="mt-1 inline-block text-sm text-blue-700 hover:underline"
+        >
+          Documentos →
+        </Link>
       </div>
 
       <section className="rounded bg-white p-6 shadow-sm">
