@@ -47,11 +47,21 @@ export default async function PaginaPacientes({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-800">Pacientes</h1>
-        {podeCadastrar && (
-          <Link href="/pacientes/novo" className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
-            Novo paciente
-          </Link>
-        )}
+        <div className="flex gap-2">
+          <a
+            href={`/api/pacientes/exportar?${new URLSearchParams(
+              Object.entries(params).filter(([, v]) => v) as [string, string][],
+            ).toString()}`}
+            className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Exportar Excel
+          </a>
+          {podeCadastrar && (
+            <Link href="/pacientes/novo" className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+              Novo paciente
+            </Link>
+          )}
+        </div>
       </div>
 
       <form className="mb-4 flex flex-wrap gap-2 rounded bg-white p-4 shadow-sm">

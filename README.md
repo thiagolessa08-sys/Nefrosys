@@ -55,10 +55,15 @@ ficam no mesmo projeto Railway.
 | Variável | Valor |
 |----------|-------|
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `DIRETORIO_ARQUIVOS` | `/data` |
 
 Use essa referência ao serviço Postgres (URL **interna**), e não a `DATABASE_PUBLIC_URL` — o tráfego
 fica dentro da rede do Railway, sem passar pela internet. Ajuste `Postgres` para o nome real do
 serviço, se for diferente.
+
+**Volume de arquivos:** crie um Volume no serviço da aplicação e monte-o em `/data`; deixe
+`DIRETORIO_ARQUIVOS=/data`. Sem o volume, documentos e fotos anexados somem a cada deploy (o disco do
+contêiner é efêmero). O backup dos arquivos é separado do backup do banco — inclua o volume na rotina.
 
 **O que acontece automaticamente:**
 
@@ -83,7 +88,10 @@ serviço, se for diferente.
 - `src/lib/auth/` — senha, sessão, autenticação, cookie, server actions e contexto do usuário.
 - `src/lib/usuarios/` — serviço de gestão de usuários.
 - `src/lib/pacientes/` — cadastro, busca, dados clínicos, resumo e evoluções (`evolucoes.ts`:
-  rascunho com salvamento automático, assinatura imutável, adendos, linha do tempo).
+  rascunho com salvamento automático, assinatura imutável, adendos, linha do tempo); documentos,
+  prontuário para impressão e exportação para Excel.
+- `src/lib/arquivos/` — armazenamento de arquivos em volume persistente (dev: `./uploads`, Railway:
+  volume montado). Trocar por S3/R2 é reimplementar só este módulo.
 - `src/lib/auditoria.ts`, `src/lib/perfis.ts` — trilha de auditoria e perfis.
 - `src/app/(app)/` — área autenticada (shell, início, usuários, auditoria).
 - `src/app/login/`, `src/app/sem-permissao/` — rotas públicas.

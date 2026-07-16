@@ -14,6 +14,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
+    "exceljs": "^4.4.0",
     "geist": "^1.7.2",
     "next": "16.2.10",
     "prisma": "^6.19.3",
