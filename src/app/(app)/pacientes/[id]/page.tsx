@@ -1,13 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { exigirPerfil } from "@/lib/auth/contexto";
-import { PERFIS_LEITURA_PACIENTE, PERFIS_CLINICO_PACIENTE } from "@/lib/pacientes/permissoes";
+import { PERFIS_LEITURA_PACIENTE, PERFIS_CLINICO_PACIENTE, PERFIS_CLINICO_LEITURA } from "@/lib/pacientes/permissoes";
 import { perfilPermitido } from "@/lib/perfis";
 import { db } from "@/lib/db";
 import { formatarCpf } from "@/lib/pacientes/documentos";
 import { registrarEvento } from "@/lib/auditoria";
 import { FormularioNefrologicos } from "./formulario-nefrologicos";
 import { FormularioSituacao } from "./formulario-situacao";
+import { listarAcessos } from "@/lib/pacientes/acessos";
+import { sorologiasAtuais } from "@/lib/pacientes/sorologias";
+import { medicacoesAtivas, listarAlergias } from "@/lib/pacientes/medicacoes";
+import { SecaoAcessos } from "./secao-acessos";
+import { SecaoSorologias } from "./secao-sorologias";
+import { SecaoMedicacoesAlergias } from "./secao-medicacoes-alergias";
 import type { Modalidade, SituacaoPaciente } from "@prisma/client";
 
 const ROTULO_SITUACAO: Record<SituacaoPaciente, string> = {
@@ -56,6 +62,16 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
   });
 
   const podeEditarClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_PACIENTE);
+  const podeVerClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_LEITURA);
+
+  const [acessos, sorologias, medicacoes, alergias] = podeVerClinico
+    ? await Promise.all([
+        listarAcessos(paciente.id),
+        sorologiasAtuais(paciente.id),
+        medicacoesAtivas(paciente.id),
+        listarAlergias(paciente.id),
+      ])
+    : [[], {}, [], []];
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -66,6 +82,14 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
           {formatarCpf(paciente.cpf)} · {formatarData(paciente.dataNascimento)} ·{" "}
           <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
         </p>
+        {podeVerClinico && (
+          <Link
+            href={`/pacientes/${paciente.id}/resumo`}
+            className="mt-1 inline-block text-sm text-blue-700 hover:underline"
+          >
+            Ver resumo do paciente →
+          </Link>
+        )}
       </div>
 
       <section className="rounded bg-white p-6 shadow-sm">
@@ -101,6 +125,8 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
         </dl>
       </section>
 
+      {podeVerClinico && (
+      <>
       <section className="rounded bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Dados nefrológicos</h2>
         {podeEditarClinico ? (
@@ -157,9 +183,22 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
         )}
       </section>
 
-      <p className="text-xs text-slate-400">
-        Acessos e sorologias, medicações, alergias e evoluções chegam nas próximas entregas.
-      </p>
+      <SecaoAcessos pacienteId={paciente.id} acessos={acessos} podeEditar={podeEditarClinico} />
+      <SecaoSorologias pacienteId={paciente.id} atuais={sorologias} podeEditar={podeEditarClinico} />
+      <SecaoMedicacoesAlergias
+        pacienteId={paciente.id}
+        medicacoes={medicacoes}
+        alergias={alergias}
+        podeEditar={podeEditarClinico}
+      />
+      </>
+      )}
+
+      {podeVerClinico && (
+        <p className="text-xs text-slate-400">
+          Evoluções chegam na próxima entrega.
+        </p>
+      )}
     </div>
   );
 }

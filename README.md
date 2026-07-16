@@ -32,7 +32,8 @@ README e no `prisma/seed.ts` — ou seja, é pública.
 
 O comando `npm run seed:demo` cria 10 pacientes fictícios (CPF/CNS gerados por algoritmo de dígito
 verificador, sem correspondência com pessoas reais). É idempotente. **Nunca rode contra um banco com
-dados reais.**
+dados reais.** A demo inclui acessos, sorologias, medicações e alergias em alguns pacientes, para
+exercitar a tela de resumo e os filtros clínicos.
 
 ## Testes
 
