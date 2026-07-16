@@ -11,7 +11,23 @@ import {
   mudarSituacao,
   type DadosIdentificacao,
 } from "@/lib/pacientes/servico";
-import type { Modalidade, Sexo, SituacaoPaciente, TipoVinculo } from "@prisma/client";
+import { registrarAcesso, marcarAcessoPerdido } from "@/lib/pacientes/acessos";
+import { registrarSorologia } from "@/lib/pacientes/sorologias";
+import {
+  adicionarMedicacao,
+  suspenderMedicacao,
+  adicionarAlergia,
+  removerAlergia,
+} from "@/lib/pacientes/medicacoes";
+import type {
+  Modalidade,
+  Sexo,
+  SituacaoPaciente,
+  TipoVinculo,
+  TipoAcesso,
+  TipoSorologia,
+  ResultadoSorologia,
+} from "@prisma/client";
 
 export type EstadoPaciente = { erro: string } | undefined;
 
@@ -122,4 +138,90 @@ export async function acaoMudarSituacao(
   if (!resultado.ok) return { erro: resultado.erro };
   revalidatePath(`/pacientes/${id}`);
   return undefined;
+}
+
+export async function acaoRegistrarAcesso(_anterior: EstadoPaciente, formData: FormData): Promise<EstadoPaciente> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  const pacienteId = String(formData.get("pacienteId") ?? "");
+  const tipo = String(formData.get("tipo") ?? "");
+  const dataConfeccao = data(formData, "dataConfeccao");
+  if (!["FISTULA", "CATETER", "PROTESE"].includes(tipo)) return { erro: "Tipo de acesso inválido." };
+  if (!dataConfeccao) return { erro: "Informe a data de confecção/implante." };
+
+  const r = await registrarAcesso(
+    {
+      pacienteId,
+      tipo: tipo as TipoAcesso,
+      localizacao: String(formData.get("localizacao") ?? ""),
+      dataConfeccao,
+      observacao: texto(formData, "observacao"),
+    },
+    autor.id,
+  );
+  if (!r.ok) return { erro: r.erro };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return undefined;
+}
+
+export async function acaoPerderAcesso(formData: FormData): Promise<void> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  await marcarAcessoPerdido(String(formData.get("acessoId") ?? ""), autor.id);
+  revalidatePath(`/pacientes/${String(formData.get("pacienteId") ?? "")}`);
+}
+
+export async function acaoRegistrarSorologia(_anterior: EstadoPaciente, formData: FormData): Promise<EstadoPaciente> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  const pacienteId = String(formData.get("pacienteId") ?? "");
+  const tipo = String(formData.get("tipo") ?? "");
+  const resultado = String(formData.get("resultado") ?? "");
+  const dataExame = data(formData, "dataExame");
+  if (!["HBSAG", "ANTI_HCV", "HIV"].includes(tipo)) return { erro: "Tipo de sorologia inválido." };
+  if (!["POSITIVO", "NEGATIVO", "INDETERMINADO"].includes(resultado)) return { erro: "Resultado inválido." };
+  if (!dataExame) return { erro: "Informe a data do exame." };
+
+  const r = await registrarSorologia(
+    { pacienteId, tipo: tipo as TipoSorologia, resultado: resultado as ResultadoSorologia, dataExame },
+    autor.id,
+  );
+  if (!r.ok) return { erro: r.erro };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return undefined;
+}
+
+export async function acaoAdicionarMedicacao(_anterior: EstadoPaciente, formData: FormData): Promise<EstadoPaciente> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  const pacienteId = String(formData.get("pacienteId") ?? "");
+  const r = await adicionarMedicacao(
+    {
+      pacienteId,
+      nome: String(formData.get("nome") ?? ""),
+      dose: texto(formData, "dose"),
+      posologia: texto(formData, "posologia"),
+    },
+    autor.id,
+  );
+  if (!r.ok) return { erro: r.erro };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return undefined;
+}
+
+export async function acaoSuspenderMedicacao(formData: FormData): Promise<void> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  await suspenderMedicacao(String(formData.get("medicacaoId") ?? ""), autor.id);
+  revalidatePath(`/pacientes/${String(formData.get("pacienteId") ?? "")}`);
+}
+
+export async function acaoAdicionarAlergia(_anterior: EstadoPaciente, formData: FormData): Promise<EstadoPaciente> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  const pacienteId = String(formData.get("pacienteId") ?? "");
+  const r = await adicionarAlergia({ pacienteId, descricao: String(formData.get("descricao") ?? "") }, autor.id);
+  if (!r.ok) return { erro: r.erro };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return undefined;
+}
+
+export async function acaoRemoverAlergia(formData: FormData): Promise<void> {
+  const autor = await exigirPerfil(...PERFIS_CLINICO_PACIENTE);
+  await removerAlergia(String(formData.get("alergiaId") ?? ""), autor.id);
+  revalidatePath(`/pacientes/${String(formData.get("pacienteId") ?? "")}`);
 }

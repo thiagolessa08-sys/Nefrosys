@@ -8,6 +8,12 @@ import { formatarCpf } from "@/lib/pacientes/documentos";
 import { registrarEvento } from "@/lib/auditoria";
 import { FormularioNefrologicos } from "./formulario-nefrologicos";
 import { FormularioSituacao } from "./formulario-situacao";
+import { listarAcessos } from "@/lib/pacientes/acessos";
+import { sorologiasAtuais } from "@/lib/pacientes/sorologias";
+import { medicacoesAtivas, listarAlergias } from "@/lib/pacientes/medicacoes";
+import { SecaoAcessos } from "./secao-acessos";
+import { SecaoSorologias } from "./secao-sorologias";
+import { SecaoMedicacoesAlergias } from "./secao-medicacoes-alergias";
 import type { Modalidade, SituacaoPaciente } from "@prisma/client";
 
 const ROTULO_SITUACAO: Record<SituacaoPaciente, string> = {
@@ -58,6 +64,15 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
   const podeEditarClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_PACIENTE);
   const podeVerClinico = perfilPermitido(usuario.perfil, PERFIS_CLINICO_LEITURA);
 
+  const [acessos, sorologias, medicacoes, alergias] = podeVerClinico
+    ? await Promise.all([
+        listarAcessos(paciente.id),
+        sorologiasAtuais(paciente.id),
+        medicacoesAtivas(paciente.id),
+        listarAlergias(paciente.id),
+      ])
+    : [[], {}, [], []];
+
   return (
     <div className="max-w-4xl space-y-6">
       <div>
@@ -67,6 +82,14 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
           {formatarCpf(paciente.cpf)} · {formatarData(paciente.dataNascimento)} ·{" "}
           <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
         </p>
+        {podeVerClinico && (
+          <Link
+            href={`/pacientes/${paciente.id}/resumo`}
+            className="mt-1 inline-block text-sm text-blue-700 hover:underline"
+          >
+            Ver resumo do paciente →
+          </Link>
+        )}
       </div>
 
       <section className="rounded bg-white p-6 shadow-sm">
@@ -159,6 +182,15 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
           <p className="mt-3 text-sm text-slate-500">Nenhuma mudança de situação registrada.</p>
         )}
       </section>
+
+      <SecaoAcessos pacienteId={paciente.id} acessos={acessos} podeEditar={podeEditarClinico} />
+      <SecaoSorologias pacienteId={paciente.id} atuais={sorologias} podeEditar={podeEditarClinico} />
+      <SecaoMedicacoesAlergias
+        pacienteId={paciente.id}
+        medicacoes={medicacoes}
+        alergias={alergias}
+        podeEditar={podeEditarClinico}
+      />
       </>
       )}
 
