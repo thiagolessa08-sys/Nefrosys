@@ -45,3 +45,6 @@ next-env.d.ts
 
 # worktrees e metadados de sessões do Claude Code
 /.claude/
+
+# arquivos enviados em desenvolvimento
+/uploads
