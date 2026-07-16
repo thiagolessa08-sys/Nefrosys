@@ -119,6 +119,7 @@ model Paciente {
   sorologias  Sorologia[]
   medicacoes  Medicacao[]
   alergias    Alergia[]
+  evolucoes Evolucao[]
 
   @@index([nome])
   @@index([situacao])
@@ -214,4 +215,41 @@ model Alergia {
   paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
 
   @@index([pacienteId])
+}
+
+enum TipoEvolucao {
+  MEDICA
+  ENFERMAGEM
+  NUTRICAO
+  PSICOLOGIA
+  SERVICO_SOCIAL
+}
+
+model Evolucao {
+  id         String       @id @default(cuid())
+  pacienteId String
+  autorId    String
+  tipo       TipoEvolucao
+  texto      String       @default("")
+  assinadaEm DateTime? // nulo = rascunho editável; preenchido = imutável
+  criadoEm   DateTime     @default(now())
+  atualizadoEm DateTime   @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  adendos  Adendo[]
+
+  @@index([pacienteId, assinadaEm])
+  @@index([autorId])
+}
+
+model Adendo {
+  id         String   @id @default(cuid())
+  evolucaoId String
+  autorId    String
+  texto      String
+  criadoEm   DateTime @default(now())
+
+  evolucao Evolucao @relation(fields: [evolucaoId], references: [id], onDelete: Cascade)
+
+  @@index([evolucaoId])
 }

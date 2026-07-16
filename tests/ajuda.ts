@@ -10,6 +10,8 @@ export async function limparBanco() {
   await db.sorologia.deleteMany();
   await db.medicacao.deleteMany();
   await db.alergia.deleteMany();
+  await db.adendo.deleteMany();
+  await db.evolucao.deleteMany();
   await db.paciente.deleteMany();
   await db.usuario.deleteMany();
 }
