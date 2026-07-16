@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Impressão do prontuário: oculta o cabeçalho/nav do sistema e elementos marcados .no-print. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  header,
+  nav {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}

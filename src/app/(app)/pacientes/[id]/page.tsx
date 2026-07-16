@@ -90,6 +90,9 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
             <Link href={`/pacientes/${paciente.id}/evolucoes`} className="text-blue-700 hover:underline">
               Evoluções →
             </Link>
+            <Link href={`/pacientes/${paciente.id}/prontuario`} className="text-blue-700 hover:underline">
+              Prontuário (PDF) →
+            </Link>
           </div>
         )}
         <Link
