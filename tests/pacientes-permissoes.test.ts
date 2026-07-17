@@ -42,4 +42,15 @@ describe("permissoes de paciente", () => {
       expect(PERFIS_CLINICO_LEITURA).toContain(perfil);
     }
   });
+
+  it("diretor (superusuário) vê pacientes, clínico e áreas de gestão", async () => {
+    const { PERFIS_GESTAO } = await import("@/lib/perfis");
+    expect(PERFIS_LEITURA_PACIENTE).toContain("DIRETOR");
+    const { PERFIS_CLINICO_LEITURA } = await import("@/lib/pacientes/permissoes");
+    expect(PERFIS_CLINICO_LEITURA).toContain("DIRETOR");
+    expect(PERFIS_GESTAO).toContain("DIRETOR");
+    // mas não edita conteúdo clínico nem cadastra pacientes
+    expect(PERFIS_CLINICO_PACIENTE).not.toContain("DIRETOR");
+    expect(PERFIS_CADASTRO_PACIENTE).not.toContain("DIRETOR");
+  });
 });

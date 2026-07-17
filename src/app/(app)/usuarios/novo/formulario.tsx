@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { acaoCriarUsuario } from "../acoes";
 
 const OPCOES_PERFIL = [
+  ["DIRETOR", "Diretor (vê tudo)"],
   ["ADMINISTRADOR", "Administrador"],
   ["MEDICO", "Médico"],
   ["ENFERMAGEM", "Enfermagem"],

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { exigirPerfil } from "@/lib/auth/contexto";
 import { db } from "@/lib/db";
-import { rotuloPerfil } from "@/lib/perfis";
+import { rotuloPerfil, PERFIS_GESTAO } from "@/lib/perfis";
 import { acaoAlternarAtivo } from "./acoes";
 
 export default async function PaginaUsuarios() {
-  const usuarioAtual = await exigirPerfil("ADMINISTRADOR");
+  const usuarioAtual = await exigirPerfil(...PERFIS_GESTAO);
   const usuarios = await db.usuario.findMany({ orderBy: { nome: "asc" } });
 
   return (

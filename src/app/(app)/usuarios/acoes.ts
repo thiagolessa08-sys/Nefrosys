@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirPerfil } from "@/lib/auth/contexto";
+import { PERFIS_GESTAO } from "@/lib/perfis";
 import { criarUsuario, definirAtivo } from "@/lib/usuarios/servico";
 import type { Perfil } from "@prisma/client";
 
 const PERFIS_VALIDOS: readonly Perfil[] = [
-  "ADMINISTRADOR", "MEDICO", "ENFERMAGEM", "TECNICO", "RECEPCAO", "MULTIPROFISSIONAL",
+  "ADMINISTRADOR", "MEDICO", "ENFERMAGEM", "TECNICO", "RECEPCAO", "MULTIPROFISSIONAL", "DIRETOR",
 ];
 
 export type EstadoFormularioUsuario = { erro: string } | undefined;
@@ -16,7 +17,7 @@ export async function acaoCriarUsuario(
   _anterior: EstadoFormularioUsuario,
   formData: FormData,
 ): Promise<EstadoFormularioUsuario> {
-  const autor = await exigirPerfil("ADMINISTRADOR");
+  const autor = await exigirPerfil(...PERFIS_GESTAO);
   const perfil = String(formData.get("perfil") ?? "");
   if (!PERFIS_VALIDOS.includes(perfil as Perfil)) return { erro: "Perfil inválido." };
 
@@ -35,7 +36,7 @@ export async function acaoCriarUsuario(
 }
 
 export async function acaoAlternarAtivo(formData: FormData): Promise<void> {
-  const autor = await exigirPerfil("ADMINISTRADOR");
+  const autor = await exigirPerfil(...PERFIS_GESTAO);
   await definirAtivo(String(formData.get("id") ?? ""), formData.get("ativo") === "true", autor.id);
   revalidatePath("/usuarios");
 }
