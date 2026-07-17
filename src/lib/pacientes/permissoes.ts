@@ -11,9 +11,10 @@ export const PERFIS_LEITURA_PACIENTE: readonly Perfil[] = [
   "DIRETOR",
 ];
 
-export const PERFIS_CADASTRO_PACIENTE: readonly Perfil[] = ["RECEPCAO", "MEDICO", "ENFERMAGEM"];
+// DIRETOR (superusuário) cadastra/edita como um profissional.
+export const PERFIS_CADASTRO_PACIENTE: readonly Perfil[] = ["RECEPCAO", "MEDICO", "ENFERMAGEM", "DIRETOR"];
 
-export const PERFIS_CLINICO_PACIENTE: readonly Perfil[] = ["MEDICO", "ENFERMAGEM"];
+export const PERFIS_CLINICO_PACIENTE: readonly Perfil[] = ["MEDICO", "ENFERMAGEM", "DIRETOR"];
 
 // Quem pode VER conteúdo clínico. Recepção vê só identificação/vínculo (spec 4.1).
 // DIRETOR (superusuário) também vê o clínico.
