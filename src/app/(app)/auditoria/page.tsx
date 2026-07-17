@@ -1,8 +1,9 @@
 import { exigirPerfil } from "@/lib/auth/contexto";
+import { PERFIS_GESTAO } from "@/lib/perfis";
 import { db } from "@/lib/db";
 
 export default async function PaginaAuditoria() {
-  await exigirPerfil("ADMINISTRADOR");
+  await exigirPerfil(...PERFIS_GESTAO);
   const eventos = await db.eventoAuditoria.findMany({
     orderBy: { criadoEm: "desc" },
     take: 200,

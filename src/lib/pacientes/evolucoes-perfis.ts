@@ -7,6 +7,8 @@ const TIPOS_POR_PERFIL: Record<Perfil, TipoEvolucao[]> = {
   TECNICO: [],
   RECEPCAO: [],
   ADMINISTRADOR: [],
+  // Diretor vê tudo, mas não é autor de evolução (ato do profissional assistente).
+  DIRETOR: [],
 };
 
 export function tiposPermitidos(perfil: Perfil): TipoEvolucao[] {

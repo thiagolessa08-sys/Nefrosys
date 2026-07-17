@@ -14,8 +14,8 @@ describe("tipos de evolução por perfil", () => {
     expect(tiposPermitidos("MULTIPROFISSIONAL")).toEqual(["NUTRICAO", "PSICOLOGIA", "SERVICO_SOCIAL"]);
   });
 
-  it("recepção, técnico e administrador não evoluem", () => {
-    for (const perfil of ["RECEPCAO", "TECNICO", "ADMINISTRADOR"] as const) {
+  it("recepção, técnico, administrador e diretor não evoluem", () => {
+    for (const perfil of ["RECEPCAO", "TECNICO", "ADMINISTRADOR", "DIRETOR"] as const) {
       expect(tiposPermitidos(perfil)).toEqual([]);
       expect(podeEvoluir(perfil)).toBe(false);
     }

@@ -14,6 +14,7 @@ enum Perfil {
   TECNICO
   RECEPCAO
   MULTIPROFISSIONAL
+  DIRETOR
 }
 
 model Usuario {
