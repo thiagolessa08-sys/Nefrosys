@@ -39,29 +39,29 @@ export default async function PaginaProntuario({ params }: { params: Promise<{ i
   const emitidoEm = dataHora(new Date());
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 bg-white p-8 text-sm text-slate-800">
+    <div className="mx-auto max-w-3xl space-y-6 rounded-[14px] border border-line bg-surface p-8 text-sm text-ink shadow-[0_1px_3px_rgba(19,37,35,.05)] print:border-0 print:shadow-none">
       <div className="no-print flex justify-between">
-        <Link href={`/pacientes/${id}`} className="text-blue-700 hover:underline">← Ficha</Link>
+        <Link href={`/pacientes/${id}`} className="font-semibold text-primary hover:underline">← Ficha</Link>
         <BotaoImprimir />
       </div>
 
-      <header className="border-b pb-3">
-        <h1 className="text-lg font-bold">Prontuário — {p.paciente.nome}</h1>
-        <p>
-          {formatarCpf(p.paciente.cpf)} · Nascimento {dataUTC(p.paciente.dataNascimento)}
+      <header className="border-b border-line-2 pb-3">
+        <h1 className="font-serif text-xl font-bold text-ink">Prontuário — {p.paciente.nome}</h1>
+        <p className="text-muted">
+          <span className="font-mono">{formatarCpf(p.paciente.cpf)}</span> · Nascimento {dataUTC(p.paciente.dataNascimento)}
         </p>
-        <p className="text-xs text-slate-500">Emitido em {emitidoEm} por {usuario.nome}</p>
+        <p className="text-xs text-muted">Emitido em {emitidoEm} por {usuario.nome}</p>
       </header>
 
       <section>
-        <h2 className="font-semibold">Dados nefrológicos</h2>
+        <h2 className="font-serif font-semibold text-ink">Dados nefrológicos</h2>
         <p>Doença de base (CID): {p.paciente.cidDoencaBase ?? "—"}</p>
         <p>Início da diálise: {dataUTC(p.paciente.dataInicioDialise)}</p>
         <p>Acesso atual: {p.acessoAtual ? `${p.acessoAtual.tipo} — ${p.acessoAtual.localizacao}` : "—"}</p>
       </section>
 
       <section>
-        <h2 className="font-semibold">Sorologias</h2>
+        <h2 className="font-serif font-semibold text-ink">Sorologias</h2>
         {tipos.map((t) => (
           <p key={t}>
             {ROTULO_SOROLOGIA[t]}: {p.sorologias[t] ? ROTULO_RESULTADO[p.sorologias[t]!.resultado] : "—"}
@@ -70,7 +70,7 @@ export default async function PaginaProntuario({ params }: { params: Promise<{ i
       </section>
 
       <section>
-        <h2 className="font-semibold">Medicações em uso</h2>
+        <h2 className="font-serif font-semibold text-ink">Medicações em uso</h2>
         {p.medicacoesAtivas.length ? (
           <ul className="list-disc pl-5">
             {p.medicacoesAtivas.map((m) => (
@@ -87,22 +87,22 @@ export default async function PaginaProntuario({ params }: { params: Promise<{ i
       </section>
 
       <section>
-        <h2 className="font-semibold">Alergias</h2>
+        <h2 className="font-serif font-semibold text-ink">Alergias</h2>
         <p>{p.alergias.length ? p.alergias.map((a) => a.descricao).join(", ") : "—"}</p>
       </section>
 
       <section>
-        <h2 className="font-semibold">Evoluções</h2>
+        <h2 className="font-serif font-semibold text-ink">Evoluções</h2>
         {p.evolucoes.length === 0 && <p>—</p>}
         {p.evolucoes.map((ev) => (
           <div key={ev.id} className="mt-3 border-t pt-2">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted">
               {ev.tipo} · {p.nomePorAutor[ev.autorId] ?? "Autor"} · {ev.assinadaEm ? dataHora(ev.assinadaEm) : ""}
             </p>
             <pre className="whitespace-pre-wrap font-sans">{ev.texto}</pre>
             {ev.adendos.map((a) => (
-              <p key={a.id} className="mt-1 pl-3 text-slate-700">
-                <span className="text-xs text-slate-500">Adendo ({dataHora(a.criadoEm)}): </span>
+              <p key={a.id} className="mt-1 pl-3 text-ink">
+                <span className="text-xs text-muted">Adendo ({dataHora(a.criadoEm)}): </span>
                 {a.texto}
               </p>
             ))}
