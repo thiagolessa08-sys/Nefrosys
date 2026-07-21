@@ -2,9 +2,7 @@
 
 import { useActionState } from "react";
 import { acaoAtualizarNefrologicos } from "../acoes";
-
-const CAMPO = "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm";
-const ROTULO = "block text-sm font-medium text-slate-700";
+import { CAMPO, ROTULO, BTN_PRIMARIO } from "@/lib/ui";
 
 export function FormularioNefrologicos({
   id,
@@ -49,13 +47,9 @@ export function FormularioNefrologicos({
           <option value="DIALISE_PERITONEAL">Diálise peritoneal</option>
         </select>
       </div>
-      {estado?.erro && <p className="text-sm text-red-600 sm:col-span-3">{estado.erro}</p>}
+      {estado?.erro && <p className="text-sm font-medium text-danger sm:col-span-3">{estado.erro}</p>}
       <div className="sm:col-span-3">
-        <button
-          type="submit"
-          disabled={pendente}
-          className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
-        >
+        <button type="submit" disabled={pendente} className={BTN_PRIMARIO}>
           {pendente ? "Salvando..." : "Salvar dados nefrológicos"}
         </button>
       </div>

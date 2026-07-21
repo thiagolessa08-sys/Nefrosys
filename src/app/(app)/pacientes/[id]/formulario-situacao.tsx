@@ -2,9 +2,7 @@
 
 import { useActionState } from "react";
 import { acaoMudarSituacao } from "../acoes";
-
-const CAMPO = "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm";
-const ROTULO = "block text-sm font-medium text-slate-700";
+import { CAMPO, ROTULO, BTN_SECUNDARIO } from "@/lib/ui";
 
 export function FormularioSituacao({ id, situacaoAtual }: { id: string; situacaoAtual: string }) {
   const [estado, acao, pendente] = useActionState(acaoMudarSituacao, undefined);
@@ -25,13 +23,9 @@ export function FormularioSituacao({ id, situacaoAtual }: { id: string; situacao
         <label htmlFor="motivo" className={ROTULO}>Motivo</label>
         <input id="motivo" name="motivo" placeholder="Ex.: transplante realizado no HC" className={CAMPO} />
       </div>
-      {estado?.erro && <p className="text-sm text-red-600 sm:col-span-3">{estado.erro}</p>}
+      {estado?.erro && <p className="text-sm font-medium text-danger sm:col-span-3">{estado.erro}</p>}
       <div className="sm:col-span-3">
-        <button
-          type="submit"
-          disabled={pendente}
-          className="rounded bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-        >
+        <button type="submit" disabled={pendente} className={BTN_SECUNDARIO}>
           {pendente ? "Registrando..." : "Registrar mudança"}
         </button>
       </div>

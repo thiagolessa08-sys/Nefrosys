@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { acaoAnexar } from "./acoes";
+import { CAMPO, ROTULO, BTN_PRIMARIO, CARD } from "@/lib/ui";
 
 const CATEGORIAS = [
   ["LAUDO", "Laudo"],
@@ -15,39 +16,30 @@ const CATEGORIAS = [
 export function FormularioUpload({ pacienteId }: { pacienteId: string }) {
   const [estado, acao, pendente] = useActionState(acaoAnexar, undefined);
   return (
-    <form action={acao} className="flex flex-wrap items-end gap-3 rounded bg-white p-4 shadow-sm">
+    <form action={acao} className={`flex flex-wrap items-end gap-3 p-4 ${CARD}`}>
       <input type="hidden" name="pacienteId" value={pacienteId} />
-      <div>
-        <label htmlFor="categoria" className="block text-sm font-medium text-slate-700">Categoria</label>
-        <select id="categoria" name="categoria" className="mt-1 rounded border border-slate-300 px-3 py-2 text-sm">
+      <label>
+        <span className={ROTULO}>Categoria</span>
+        <select name="categoria" className={CAMPO}>
           {CATEGORIAS.map(([v, r]) => (
-            <option key={v} value={v}>
-              {r}
-            </option>
+            <option key={v} value={v}>{r}</option>
           ))}
         </select>
-      </div>
-      <div>
-        <label htmlFor="arquivo" className="block text-sm font-medium text-slate-700">
-          Arquivo (PDF ou imagem, até 10 MB)
-        </label>
+      </label>
+      <label className="flex-1">
+        <span className={ROTULO}>Arquivo (PDF ou imagem, até 10 MB)</span>
         <input
-          id="arquivo"
           name="arquivo"
           type="file"
           accept="application/pdf,image/*"
           required
-          className="mt-1 text-sm"
+          className="mt-1 block w-full text-sm text-muted file:mr-3 file:rounded-[8px] file:border-0 file:bg-primary-tint file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-[#d5e8e5]"
         />
-      </div>
-      <button
-        type="submit"
-        disabled={pendente}
-        className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
-      >
+      </label>
+      <button type="submit" disabled={pendente} className={BTN_PRIMARIO}>
         {pendente ? "Enviando..." : "Anexar"}
       </button>
-      {estado?.erro && <p className="w-full text-sm text-red-600">{estado.erro}</p>}
+      {estado?.erro && <p className="w-full text-sm font-medium text-danger">{estado.erro}</p>}
     </form>
   );
 }

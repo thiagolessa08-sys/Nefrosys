@@ -66,32 +66,47 @@ export function EditorRascunho({
     });
   }
 
+  const salvo = estado === "salvo";
   return (
-    <div className="rounded bg-white p-6 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">Rascunho</h2>
-        <span className={estado === "erro" ? "text-xs text-red-600" : "text-xs text-slate-400"}>
+    <div className="overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_1px_3px_rgba(19,37,35,.05)]">
+      <div className="flex items-center justify-between border-b border-line-2 p-[14px_20px]">
+        <div className="flex items-center gap-[10px]">
+          <span className="h-[9px] w-[9px] rounded-full bg-primary" />
+          <h2 className="text-base font-bold">Rascunho da evolução</h2>
+        </div>
+        <span
+          className={`flex items-center gap-[7px] text-[12.5px] font-semibold ${
+            estado === "erro" ? "text-danger" : salvo ? "text-good" : "text-muted"
+          }`}
+        >
+          {salvo && <span className="h-2 w-2 rounded-full bg-good" />}
           {rotuloEstado}
         </span>
       </div>
-      <textarea
-        value={texto}
-        onChange={(e) => editar(e.target.value)}
-        rows={16}
-        className="w-full rounded border border-slate-300 p-3 font-mono text-sm"
-      />
-      {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
-      <div className="mt-3 flex items-center gap-3">
-        <button
-          onClick={assinar}
-          disabled={assinando || !texto.trim()}
-          className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
-        >
-          {assinando ? "Assinando..." : "Assinar evolução"}
-        </button>
-        <span className="text-xs text-slate-400">
-          Assinar torna a evolução definitiva — depois, só adendos.
-        </span>
+      <div className="p-[18px_20px]">
+        <textarea
+          value={texto}
+          onChange={(e) => editar(e.target.value)}
+          rows={16}
+          className="w-full rounded-[11px] border border-line bg-surface-2 p-[14px] font-mono text-[14px] leading-relaxed focus:border-primary focus:bg-surface focus:outline-2 focus:outline-primary"
+        />
+        {erro && <p className="mt-2 text-sm font-medium text-danger">{erro}</p>}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <p className="max-w-[400px] text-[12.5px] text-muted">
+            Ao assinar, a evolução torna-se <strong>imutável</strong>. Correções posteriores são feitas por adendo.
+          </p>
+          <button
+            onClick={assinar}
+            disabled={assinando || !texto.trim()}
+            className="ml-auto flex items-center gap-2 rounded-[9px] bg-primary px-5 py-[10px] text-sm font-bold text-white shadow-[0_1px_2px_rgba(11,92,87,.4)] hover:bg-primary-600 disabled:opacity-50"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            {assinando ? "Assinando..." : "Assinar evolução"}
+          </button>
+        </div>
       </div>
     </div>
   );
