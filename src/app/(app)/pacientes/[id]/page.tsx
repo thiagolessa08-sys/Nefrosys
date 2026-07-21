@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { exigirPerfil } from "@/lib/auth/contexto";
 import { PERFIS_LEITURA_PACIENTE, PERFIS_CLINICO_PACIENTE, PERFIS_CLINICO_LEITURA } from "@/lib/pacientes/permissoes";
 import { perfilPermitido } from "@/lib/perfis";
@@ -14,7 +13,9 @@ import { medicacoesAtivas, listarAlergias } from "@/lib/pacientes/medicacoes";
 import { SecaoAcessos } from "./secao-acessos";
 import { SecaoSorologias } from "./secao-sorologias";
 import { SecaoMedicacoesAlergias } from "./secao-medicacoes-alergias";
-import type { Modalidade, SituacaoPaciente } from "@prisma/client";
+import { CabecalhoPaciente } from "./cabecalho";
+import { Secao } from "@/lib/ui";
+import type { Modalidade, SituacaoPaciente, TipoSorologia } from "@prisma/client";
 
 const ROTULO_SITUACAO: Record<SituacaoPaciente, string> = {
   ATIVO: "Ativo",
@@ -23,22 +24,45 @@ const ROTULO_SITUACAO: Record<SituacaoPaciente, string> = {
   TRANSFERIDO: "Transferido",
   EM_TRANSITO: "Em trânsito",
 };
-
+const CLASSE_SITUACAO: Record<SituacaoPaciente, string> = {
+  ATIVO: "bg-good-tint text-good",
+  TRANSPLANTADO: "bg-info-tint text-info",
+  OBITO: "bg-danger-tint text-danger",
+  TRANSFERIDO: "bg-line-2 text-muted",
+  EM_TRANSITO: "bg-amber-tint text-amber",
+};
 const ROTULO_MODALIDADE: Record<Modalidade, string> = {
   HEMODIALISE: "Hemodiálise",
   DIALISE_PERITONEAL: "Diálise peritoneal",
 };
+const ROTULO_SOROLOGIA: Record<TipoSorologia, string> = { HBSAG: "HBsAg", ANTI_HCV: "Anti-HCV", HIV: "HIV" };
 
-// Datas de calendário (nascimento, início da diálise) são gravadas como meia-noite UTC.
-// Converter para o fuso de Brasília jogaria para as 21h do dia anterior — data errada.
 function formatarData(data: Date | null): string {
-  if (!data) return "—";
-  return data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  return data ? data.toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 }
-
-// Já um instante (quando o registro foi feito) é exibido no fuso da clínica.
 function formatarDataHora(data: Date): string {
   return data.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+function idade(nascimento: Date): number {
+  const hoje = new Date();
+  let a = hoje.getUTCFullYear() - nascimento.getUTCFullYear();
+  const m = hoje.getUTCMonth() - nascimento.getUTCMonth();
+  if (m < 0 || (m === 0 && hoje.getUTCDate() < nascimento.getUTCDate())) a--;
+  return a;
+}
+const SEXO = { FEMININO: "Feminino", MASCULINO: "Masculino", OUTRO: "Outro" } as const;
+
+function Kv({ pares }: { pares: [string, string][] }) {
+  return (
+    <dl className="flex flex-col gap-[10px] text-sm">
+      {pares.map(([k, v]) => (
+        <div key={k} className="flex justify-between gap-[18px]">
+          <dt className="font-semibold text-muted">{k}</dt>
+          <dd className="text-right font-semibold">{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 export default async function PaginaPaciente({ params }: { params: Promise<{ id: string }> }) {
@@ -47,13 +71,10 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
 
   const paciente = await db.paciente.findUnique({
     where: { id },
-    include: {
-      mudancasSituacao: { orderBy: { registradoEm: "desc" } },
-    },
+    include: { mudancasSituacao: { orderBy: { registradoEm: "desc" } } },
   });
   if (!paciente) notFound();
 
-  // LGPD/CFM: toda visualização de dado de paciente é registrada
   await registrarEvento({
     usuarioId: usuario.id,
     acao: "paciente.visualizar",
@@ -73,143 +94,164 @@ export default async function PaginaPaciente({ params }: { params: Promise<{ id:
       ])
     : [[], {}, [], []];
 
+  const reagentes = (["HBSAG", "ANTI_HCV", "HIV"] as TipoSorologia[]).filter(
+    (t) => sorologias[t]?.resultado === "POSITIVO",
+  );
+
+  const badges = podeVerClinico ? (
+    <>
+      {alergias.length > 0 && (
+        <span className="inline-flex items-center gap-[6px] rounded-md bg-danger-tint px-[9px] py-[3px] text-xs font-bold text-danger">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" />
+          </svg>
+          {alergias.length} {alergias.length === 1 ? "alergia" : "alergias"}
+        </span>
+      )}
+      {reagentes.map((t) => (
+        <span key={t} className="rounded-md bg-amber-tint px-[9px] py-[3px] text-xs font-bold text-amber">
+          {ROTULO_SOROLOGIA[t]} reagente
+        </span>
+      ))}
+    </>
+  ) : null;
+
+  const meta = (
+    <>
+      <span className="font-mono">CPF {formatarCpf(paciente.cpf)}</span>
+      {paciente.cns && <span className="font-mono">CNS {paciente.cns}</span>}
+      <span>{idade(paciente.dataNascimento)} anos · {SEXO[paciente.sexo]}</span>
+      {paciente.modalidade && <span>{ROTULO_MODALIDADE[paciente.modalidade]}</span>}
+      <span>{paciente.tipoVinculo === "SUS" ? "SUS" : paciente.convenioNome ?? "Convênio"}</span>
+    </>
+  );
+
   return (
-    <div className="max-w-4xl space-y-6">
-      <div>
-        <Link href="/pacientes" className="text-sm text-blue-700 hover:underline">← Pacientes</Link>
-        <h1 className="mt-1 text-xl font-semibold text-slate-800">{paciente.nome}</h1>
-        <p className="text-sm text-slate-500">
-          {formatarCpf(paciente.cpf)} · {formatarData(paciente.dataNascimento)} ·{" "}
-          <span className="font-medium">{ROTULO_SITUACAO[paciente.situacao]}</span>
-        </p>
-        {podeVerClinico && (
-          <div className="mt-1 flex gap-4 text-sm">
-            <Link href={`/pacientes/${paciente.id}/resumo`} className="text-blue-700 hover:underline">
-              Ver resumo do paciente →
-            </Link>
-            <Link href={`/pacientes/${paciente.id}/evolucoes`} className="text-blue-700 hover:underline">
-              Evoluções →
-            </Link>
-            <Link href={`/pacientes/${paciente.id}/prontuario`} className="text-blue-700 hover:underline">
-              Prontuário (PDF) →
-            </Link>
-          </div>
-        )}
-        <Link
-          href={`/pacientes/${paciente.id}/documentos`}
-          className="mt-1 inline-block text-sm text-blue-700 hover:underline"
-        >
-          Documentos →
-        </Link>
-      </div>
-
-      <section className="rounded bg-white p-6 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Identificação e vínculo</h2>
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div><dt className="text-slate-500">CNS</dt><dd>{paciente.cns ?? "—"}</dd></div>
-          <div><dt className="text-slate-500">Telefone</dt><dd>{paciente.telefone ?? "—"}</dd></div>
-          <div><dt className="text-slate-500">E-mail</dt><dd>{paciente.emailContato ?? "—"}</dd></div>
-          <div>
-            <dt className="text-slate-500">Endereço</dt>
-            <dd>
-              {[paciente.logradouro, paciente.numero, paciente.bairro, paciente.cidade, paciente.uf]
-                .filter(Boolean)
-                .join(", ") || "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-slate-500">Contato de emergência</dt>
-            <dd>
-              {paciente.contatoEmergenciaNome
-                ? `${paciente.contatoEmergenciaNome} — ${paciente.contatoEmergenciaTelefone ?? "sem telefone"}`
-                : "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-slate-500">Vínculo</dt>
-            <dd>
-              {paciente.tipoVinculo === "SUS"
-                ? "SUS"
-                : `${paciente.convenioNome ?? "Convênio"} — matrícula ${paciente.convenioMatricula ?? "—"}`}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      {podeVerClinico && (
-      <>
-      <section className="rounded bg-white p-6 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Dados nefrológicos</h2>
-        {podeEditarClinico ? (
-          <FormularioNefrologicos
-            id={paciente.id}
-            cidDoencaBase={paciente.cidDoencaBase ?? ""}
-            dataInicioDialise={paciente.dataInicioDialise?.toISOString().slice(0, 10) ?? ""}
-            modalidade={paciente.modalidade ?? ""}
-          />
-        ) : (
-          <dl className="grid gap-3 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="text-slate-500">Doença de base (CID)</dt>
-              <dd>{paciente.cidDoencaBase ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Início da diálise</dt>
-              <dd>{formatarData(paciente.dataInicioDialise)}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Modalidade</dt>
-              <dd>{paciente.modalidade ? ROTULO_MODALIDADE[paciente.modalidade] : "—"}</dd>
-            </div>
-          </dl>
-        )}
-      </section>
-
-      <section className="rounded bg-white p-6 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Situação</h2>
-        {podeEditarClinico && <FormularioSituacao id={paciente.id} situacaoAtual={paciente.situacao} />}
-        {paciente.mudancasSituacao.length > 0 ? (
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-slate-500">
-                <th className="py-2">Data</th>
-                <th className="py-2">De</th>
-                <th className="py-2">Para</th>
-                <th className="py-2">Motivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paciente.mudancasSituacao.map((mudanca) => (
-                <tr key={mudanca.id} className="border-b">
-                  <td className="py-2">{formatarDataHora(mudanca.registradoEm)}</td>
-                  <td className="py-2">{mudanca.de ? ROTULO_SITUACAO[mudanca.de] : "—"}</td>
-                  <td className="py-2">{ROTULO_SITUACAO[mudanca.para]}</td>
-                  <td className="py-2">{mudanca.motivo ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="mt-3 text-sm text-slate-500">Nenhuma mudança de situação registrada.</p>
-        )}
-      </section>
-
-      <SecaoAcessos pacienteId={paciente.id} acessos={acessos} podeEditar={podeEditarClinico} />
-      <SecaoSorologias pacienteId={paciente.id} atuais={sorologias} podeEditar={podeEditarClinico} />
-      <SecaoMedicacoesAlergias
-        pacienteId={paciente.id}
-        medicacoes={medicacoes}
-        alergias={alergias}
-        podeEditar={podeEditarClinico}
+    <div>
+      <CabecalhoPaciente
+        id={paciente.id}
+        nome={paciente.nome}
+        situacao={ROTULO_SITUACAO[paciente.situacao]}
+        situacaoClasse={CLASSE_SITUACAO[paciente.situacao]}
+        meta={meta}
+        badges={badges}
+        temClinico={podeVerClinico}
       />
-      </>
+
+      {podeVerClinico && (alergias.length > 0 || reagentes.length > 0) && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border-[1.5px] border-danger-line bg-danger-tint p-[13px_18px]">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b1271e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" />
+          </svg>
+          {alergias.length > 0 && (
+            <>
+              <span className="font-extrabold text-danger">Alergias:</span>
+              <span className="font-bold text-danger">{alergias.map((a) => a.descricao).join(" · ")}</span>
+            </>
+          )}
+          {reagentes.map((t) => (
+            <span key={t} className="whitespace-nowrap rounded-md bg-amber-tint px-[9px] py-[2px] font-bold text-amber">
+              {ROTULO_SOROLOGIA[t]} reagente
+            </span>
+          ))}
+        </div>
       )}
 
-      {podeVerClinico && (
-        <p className="text-xs text-slate-400">
-          Evoluções chegam na próxima entrega.
-        </p>
-      )}
+      <div className="grid grid-cols-1 items-start gap-[18px] lg:grid-cols-2">
+        <Secao titulo="Identificação e vínculo">
+          <Kv
+            pares={[
+              ["CNS", paciente.cns ?? "—"],
+              ["Telefone", paciente.telefone ?? "—"],
+              ["E-mail", paciente.emailContato ?? "—"],
+              [
+                "Endereço",
+                [paciente.logradouro, paciente.numero, paciente.bairro, paciente.cidade, paciente.uf]
+                  .filter(Boolean)
+                  .join(", ") || "—",
+              ],
+              [
+                "Contato de emergência",
+                paciente.contatoEmergenciaNome
+                  ? `${paciente.contatoEmergenciaNome} — ${paciente.contatoEmergenciaTelefone ?? "sem telefone"}`
+                  : "—",
+              ],
+              [
+                "Vínculo",
+                paciente.tipoVinculo === "SUS"
+                  ? "SUS"
+                  : `${paciente.convenioNome ?? "Convênio"} — matrícula ${paciente.convenioMatricula ?? "—"}`,
+              ],
+            ]}
+          />
+        </Secao>
+
+        {podeVerClinico && (
+          <Secao titulo="Dados nefrológicos">
+            {podeEditarClinico ? (
+              <FormularioNefrologicos
+                id={paciente.id}
+                cidDoencaBase={paciente.cidDoencaBase ?? ""}
+                dataInicioDialise={paciente.dataInicioDialise?.toISOString().slice(0, 10) ?? ""}
+                modalidade={paciente.modalidade ?? ""}
+              />
+            ) : (
+              <Kv
+                pares={[
+                  ["Doença de base (CID)", paciente.cidDoencaBase ?? "—"],
+                  ["Início da diálise", formatarData(paciente.dataInicioDialise)],
+                  ["Modalidade", paciente.modalidade ? ROTULO_MODALIDADE[paciente.modalidade] : "—"],
+                ]}
+              />
+            )}
+          </Secao>
+        )}
+
+        {podeVerClinico && (
+          <Secao titulo="Situação — histórico de mudanças" className="lg:col-span-2">
+            {podeEditarClinico && (
+              <div className="mb-4">
+                <FormularioSituacao id={paciente.id} situacaoAtual={paciente.situacao} />
+              </div>
+            )}
+            {paciente.mudancasSituacao.length > 0 ? (
+              <ol className="relative list-none pl-[22px]">
+                {paciente.mudancasSituacao.map((m) => (
+                  <li key={m.id} className="relative pb-[18px] last:pb-0">
+                    <span className="absolute -left-[22px] top-[3px] h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_3px_var(--color-surface),0_0_0_4px_var(--color-line)]" />
+                    <span className="absolute -left-[17px] top-[14px] bottom-0 w-[1.5px] bg-line" />
+                    <div className="flex flex-wrap justify-between gap-3">
+                      <span className="font-bold">
+                        {m.de ? `${ROTULO_SITUACAO[m.de]} → ` : ""}
+                        {ROTULO_SITUACAO[m.para]}
+                      </span>
+                      <span className="font-mono text-xs text-muted">{formatarDataHora(m.registradoEm)}</span>
+                    </div>
+                    {m.motivo && <p className="mt-[2px] text-[13px] text-muted">{m.motivo}</p>}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-sm text-muted">Nenhuma mudança de situação registrada.</p>
+            )}
+          </Secao>
+        )}
+
+        {podeVerClinico && (
+          <div className="lg:col-span-2">
+            <SecaoAcessos pacienteId={paciente.id} acessos={acessos} podeEditar={podeEditarClinico} />
+          </div>
+        )}
+        {podeVerClinico && <SecaoSorologias pacienteId={paciente.id} atuais={sorologias} podeEditar={podeEditarClinico} />}
+        {podeVerClinico && (
+          <SecaoMedicacoesAlergias
+            pacienteId={paciente.id}
+            medicacoes={medicacoes}
+            alergias={alergias}
+            podeEditar={podeEditarClinico}
+          />
+        )}
+      </div>
     </div>
   );
 }
